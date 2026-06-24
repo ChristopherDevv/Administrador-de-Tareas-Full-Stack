@@ -1,0 +1,27 @@
+{
+  "name": "creadortareas",
+  "version": "1.0.0",
+  "description": "App Administrador de tareas",
+  "homepage": "https://github.com/ChristopherDevv/Administrador-de-Tareas-Full-Stack#readme",
+  "bugs": {
+    "url": "https://github.com/ChristopherDevv/Administrador-de-Tareas-Full-Stack/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChristopherDevv/Administrador-de-Tareas-Full-Stack.git"
+  },
+  "license": "ISC",
+  "author": "ChristopherDevv",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
