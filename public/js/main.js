@@ -1,5 +1,5 @@
 // SI NO HAY EN LOCALSTORAGE CREAMOS UN ARRAY, SI HAY ENTONCES OBTENEMOS DEL LOCALSTORAGE
-let tareasArr = JSON.parse(localStorage.getItem("tareas")) || [];
+// let tareasArr = JSON.parse(localStorage.getItem("tareas")) || [];
 
 // OBTENEMOS EL ELEMENTO PADRE
 const tareaPadre = document.querySelector(".tareas");
@@ -24,6 +24,32 @@ const elementoTareasBox = document.querySelector(".tareas-box");
 
 // OBTENEMOS EL ELEMENTO DE LA TAREA
 // const elementoBoxTarea = document.querySelector(".tarea");
+
+// FETCH CREAR TAREA
+const crearTareaApi = async (titulo) => {
+  return await fetch("/api/tareas", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      titulo,
+    }),
+  });
+};
+
+const tareasMostrarApi = async () => {
+  try {
+    const res = await fetch("/api/tareas");
+    if (!res.ok) {
+      throw new Error("Error de red");
+    }
+    const datos = await res.json();
+    return datos;
+  } catch (error) {
+    console.log("Error " + error);
+  }
+};
 
 // FUNCION QUE CREA ELEMENTO PARA AGREGAR TAREA
 const elementoNuevaTarea = () => {
@@ -97,13 +123,9 @@ const elementosTareas = () => {
   };
 };
 
-// CREAMOS OBJETO CON EL VALOR DEL INPUT Y CON UN ID ALEATORIO Y UNICO,
-const crearTarea = (elementoInput) => {
-  let id = Date.now();
-  return {
-    id,
-    titulo: elementoInput.value,
-  };
+// CREAMOS LA TAREA
+const crearTarea = async (elementoInput) => {
+  return await crearTareaApi(elementoInput.value);
 };
 
 // FUNCION PARA AGREGAR TAREA
@@ -137,7 +159,7 @@ const agregarTarea = () => {
     elementoInput.focus();
 
     // FUNCION QUE VALIDA Y GUARDA EL VALOR DEL INPUT AL LOCAL STORAGE
-    const guardar = () => {
+    const guardar = async () => {
       if (elementoInput.value === "") {
         // UTILIZAMOS UN ALERT PERSONALIZADO
         Swal.fire({
@@ -147,15 +169,12 @@ const agregarTarea = () => {
         return;
       }
 
-      const tareasObj = crearTarea(elementoInput);
+      // CREAMOS LA TAREA EN LA BD
+      await crearTarea(elementoInput);
 
-      // GUARDAMOS EL OBJETO CON SUS DATOS AL ARRAY
-      tareasArr.push(tareasObj);
+      const tareas = await tareasMostrarApi();
 
-      // GUARDAMOS EL ARRAY EN EL LOCAL STORAGE
-      localStorage.setItem("tareas", JSON.stringify(tareasArr));
-
-      if (tareasArr.length === 1) {
+      if (tareas.length === 1) {
         // Seleccionamos el elemento y lo borramos
         document.querySelector(".vacio").remove();
       }
@@ -165,7 +184,7 @@ const agregarTarea = () => {
 
       // MOSTRAR LA ULTIMA TAREA AGREGADA SIN TENER QUE REINICIAR PAGINA
       // MOSTRAR TODAS LAS TAREAS DESPUES DE AGREGAR
-      mostrarTareas();
+      await mostrarTareas();
 
       // ELIMINAMOS EL ELEMENTO DEL AGREGAR UNA VEZ GUARDADO
       eliminarElementoAgregar();
@@ -173,10 +192,10 @@ const agregarTarea = () => {
 
     agregarActivo = true;
 
-    // EVENTO QUE AL DAR CLICK AGREGA LA TAREA EN LOCALSTORAGE
+    // EVENTO QUE AL DAR CLICK AGREGA LA TAREA EN BD
     elementoBtnGuardar.addEventListener("click", guardar);
 
-    // EVENTO QUE SE ACTIVA AL DAR TECLA ENTER DEL TECLADO, GUARDA LA TAREA EN LOCAL STORAGE
+    // EVENTO QUE SE ACTIVA AL DAR TECLA ENTER DEL TECLADO, GUARDA LA TAREA EN BD
     elementoInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         guardar();
@@ -190,8 +209,10 @@ const agregarTarea = () => {
 
 // FUNCION QUE MUESTRA LA ULTIMA TAREA AGREGADA A LOS ELEMENTOS SIN TENER QUE REINICIAR PAGINA
 // FUNCION QUE MUESTRA TODAS LAS TAREAS GUARDADAS DESPUES DE AGREGAR UNA NUEVA
-const mostrarTareas = () => {
-  if (tareasArr.length === 0) {
+const mostrarTareas = async () => {
+  const tareas = await tareasMostrarApi();
+
+  if (tareas.length === 0) {
     elementoSinTareas();
     return;
   }
@@ -200,7 +221,7 @@ const mostrarTareas = () => {
     tareaPadre.removeChild(tareaPadre.firstChild);
   }
 
-  tareasArr.forEach((tarea) => {
+  tareas.forEach((tarea) => {
     const {
       elementoTituloTarea,
       elementoBtnEliminar,
@@ -246,7 +267,7 @@ const mostrarTareas = () => {
         }
         // EDITAMOS Y AGREGAMOS EL VALOR DEL INPUT AL OBJETO Y PROPIEDAD TITULO
         tarea.titulo = elementoInputEditar.value;
-        localStorage.setItem("tareas", JSON.stringify(tareasArr));
+        // localStorage.setItem("tareas", JSON.stringify(tareasArr));
 
         elementoInputEditar.remove();
         elementoBtnsEditar.remove();
@@ -273,9 +294,9 @@ const mostrarTareas = () => {
       elementoBtnCancelarEditar.addEventListener("click", cancelarEditar);
     });
     // EVENTO QUE ELIMINA EL ELEMENTO DE LA TAREA
-    elementoBtnEliminar.addEventListener("click", () => {
-      eliminarTarea(tarea, elementoTarea);
-    });
+    // elementoBtnEliminar.addEventListener("click", () => {
+    //   eliminarTarea(tarea, elementoTarea);
+    // });
   });
 };
 
@@ -285,7 +306,7 @@ const obtenerInputValor = () => {
 };
 
 // FUNCION QUE BUSCA LAS TAREAS Y LAS MUESTRA + ELIMINA LA TAREA
-const buscar = () => {
+const buscar = async () => {
   if (agregarActivo) {
     return;
   }
@@ -294,9 +315,11 @@ const buscar = () => {
     return;
   }
 
+  const tareas = await tareasMostrarApi();
+
   const inpBuscar = obtenerInputValor();
 
-  const busqueda = tareasArr.filter((tarea) =>
+  const busqueda = tareas.filter((tarea) =>
     tarea.titulo.toLowerCase().includes(inpBuscar.toLowerCase().trim()),
   );
 
@@ -345,8 +368,8 @@ const buscar = () => {
           return;
         }
         // EDITAMOS Y AGREGAMOS EL VALOR DEL INPUT AL OBJETO Y PROPIEDAD TITULO
-        tarea.titulo = elementoInputEditar.value;
-        localStorage.setItem("tareas", JSON.stringify(tareasArr));
+        // tarea.titulo = elementoInputEditar.value;
+        // localStorage.setItem("tareas", JSON.stringify(tareasArr));
 
         elementoInputEditar.remove();
         elementoBtnsEditar.remove();
@@ -374,26 +397,26 @@ const buscar = () => {
     });
 
     // EVENTO QUE ELIMINA EL ELEMENTO DE LA TAREA
-    elementoBtnEliminar.addEventListener("click", () => {
-      eliminarTarea(tarea, elementoTarea);
-    });
+    // elementoBtnEliminar.addEventListener("click", () => {
+    //   eliminarTarea(tarea, elementoTarea);
+    // });
   });
 };
 
 // FUNCION QUE ELIMINA LAS TAREAS SELECCIONADAS POR SU ID
 const eliminarUltimaTareaAgregada = (ultimaTarea, elementoTarea) => {
   // FILTRAMOS HACIENDO QUE DEVUELVA UN ARRAY AL MISMO ARRAY ORIGINAL MEDIANTE TODOS SUS DATOS MENOS EL ID QUE COINCIDA CON EL QUE BORRAMOS
-  tareasArr = tareasArr.filter((tareas) => tareas.id !== ultimaTarea.id);
+  // tareasArr = tareasArr.filter((tareas) => tareas.id !== ultimaTarea.id);
 
   // VOLVEMOS A GURDAR EL NUEVO ARRAY AL LOCAL STORAGE
-  localStorage.setItem("tareas", JSON.stringify(tareasArr));
+  // localStorage.setItem("tareas", JSON.stringify(tareasArr));
 
   // ELIMINAMOS EL ELEMENTO DE LA TAREA BORRADA
   elementoTarea.remove();
 
-  if (tareasArr.length === 0) {
-    elementoSinTareas();
-  }
+  // if (tareasArr.length === 0) {
+  //   elementoSinTareas();
+  // }
 };
 
 // FUNCION QUE ELIMINA LAS TAREAS SELECCIONADAS POR SU ID
@@ -402,17 +425,17 @@ const eliminarTarea = (tarea, elementoTarea) => {
     return;
   }
   // FILTRAMOS HACIENDO QUE DEVUELVA UN ARRAY AL MISMO ARRAY ORIGINAL MEDIANTE TODOS SUS DATOS MENOS EL ID QUE COINCIDA CON EL QUE BORRAMOS
-  tareasArr = tareasArr.filter((tareas) => tareas.id !== tarea.id);
+  // tareasArr = tareasArr.filter((tareas) => tareas.id !== tarea.id);
 
   // VOLVEMOS A GURDAR EL NUEVO ARRAY AL LOCAL STORAGE
-  localStorage.setItem("tareas", JSON.stringify(tareasArr));
+  // localStorage.setItem("tareas", JSON.stringify(tareasArr));
 
   // ELIMINAMOS EL ELEMENTO DE LA TAREA BORRADA
   elementoTarea.remove();
 
-  if (tareasArr.length === 0) {
-    elementoSinTareas();
-  }
+  // if (tareasArr.length === 0) {
+  //   elementoSinTareas();
+  // }
 };
 
 const elementoSinTareas = () => {
