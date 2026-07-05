@@ -16,6 +16,4 @@ const mostrarTareas = async (req, res) => {
   res.json(tareas);
 };
 
-
-
-module.exports = { crearTarea, cantidadTareas, mostrarTareas };
+module.exports = { crearTarea, mostrarTareas };

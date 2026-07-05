@@ -23,7 +23,7 @@ const buscadorInput = document.getElementById("buscarTareas");
 const elementoTareasBox = document.querySelector(".tareas-box");
 
 // OBTENEMOS EL ELEMENTO DE LA TAREA
-// const elementoBoxTarea = document.querySelector(".tarea");
+const elementoBoxTarea = document.querySelector(".tarea");
 
 // FETCH CREAR TAREA
 const crearTareaApi = async (titulo) => {
